@@ -14,9 +14,9 @@ RAG pipelines re-derive knowledge on every query. Docs drift silently the moment
 
 `kb` takes a different approach: a persistent, compounding knowledge base that is **written by the LLM, curated by you**, and **pinned to the code**. Every claim points to a real file and symbol; the skill verifies those anchors automatically and refuses to write hallucinated ones. When the code changes, the skill loads the relevant entries first and offers an update after.
 
-Influences:
-- [Andrej Karpathy — "LLM Wiki"](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — incrementally-maintained wiki over ad-hoc RAG.
-- The code-anchored KB pattern used internally at [Scovai](https://scovai.com), extracted and made generic.
+The core framing — that the LLM should *incrementally maintain* a markdown wiki rather than re-derive knowledge on every query — comes directly from Andrej Karpathy's ["LLM Wiki" gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). Reading it changed how we thought about LLM-assisted documentation, and most of the non-code-anchor machinery in this skill (`INDEX.md`-first reads, append-only `LOG.md`, `/kb ingest` for multi-page source updates, `/kb ask` with citations, `/kb lint` for orphans and contradictions) is a direct port of the ideas in that document into a Claude Code skill. See [Acknowledgements](#acknowledgements) below for the full breakdown.
+
+The code-anchoring half — frontmatter with `{path, symbol}` pointers, pre-write verification, `last_verified` freshness, proactive-load-before-edit — comes from an internal skill used at [Scovai](https://scovai.com), extracted and made generic here.
 
 ---
 
@@ -230,6 +230,26 @@ kb/
 - No auto-migration from existing KB formats.
 - No web UI, graph view, or search index.
 - One `kb_root` per repo (v1).
+
+---
+
+## Acknowledgements
+
+This skill would not exist in its current shape without **Andrej Karpathy's ["LLM Wiki"](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**. That gist laid out the core argument — replace ad-hoc RAG with a persistent, LLM-maintained markdown wiki — and almost every design decision in `kb` that isn't about code anchors traces back to it:
+
+| Idea in this skill                                   | Origin in the LLM Wiki gist                                       |
+|------------------------------------------------------|-------------------------------------------------------------------|
+| `INDEX.md` as the routing table, read first          | "LLM reads index first when answering queries"                    |
+| `LOG.md` as an append-only chronological record      | "Append-only log of ingests, queries, lint passes"                |
+| `/kb ingest` touching many pages from one source     | "A single source should update 10–15 wiki pages"                  |
+| `/kb ask` with citations                             | Query operation: "synthesize answers with citations"              |
+| `/kb lint` for orphans, contradictions, stale, xrefs | The entire "Maintenance: Linting" section                         |
+| "Written by the LLM, curated by you"                 | "User-read, LLM-written"                                          |
+| Proactive compounding of answers back into the KB    | "Good answers can be filed back into the wiki as new pages"       |
+
+We layered on the code-anchoring half — `{path, symbol}` verification, `last_verified` freshness, and the proactive load-before-edit trigger — which came from internal use at [Scovai](https://scovai.com). But the skeleton is Karpathy's, and the skill is better for it. Thank you.
+
+If you're building anything LLM + knowledge-base adjacent, read the gist. It's short and worth it.
 
 ---
 
