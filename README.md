@@ -211,7 +211,7 @@ This is the feature that makes the system pay for itself: you can't drift away f
 
 ```
 kb/
-├── kb.md                  # skill definition
+├── SKILL.md               # skill definition (Agent Skills spec)
 ├── README.md              # this file
 ├── templates/
 │   ├── kb-config.yaml     # default config written by /kb init
